@@ -106,14 +106,68 @@ def dcos_signal(b, opts):
     b.cluster_id()
 
 
+def migrate_containers(legacy_containers_dir, new_containers_dir):
+    if not legacy_containers_dir.exists():
+        sys.stdout.write(
+            "Legacy containers dir {} does not exist. Skipping migration.\n".format(
+                legacy_containers_dir
+            )
+        )
+        return
+
+    if new_containers_dir.exists() and any(new_containers_dir.iterdir()):
+        sys.stderr.write(
+            "ERROR: Can't migrate {} because destination {} contains files. Exiting.\n".format(
+                legacy_containers_dir,
+                new_containers_dir
+            )
+        )
+        raise RuntimeError()
+
+    # Ensure that the full path to the destination dir exists
+    new_containers_dir.parent.mkdir(parents=True, exist_ok=True)
+
+    # Delete destination dir, so we don't move the legacy dir *into* it.
+    if new_containers_dir.exists():
+        new_containers_dir.rmdir()
+
+    sys.stdout.write("Migrating {} to {}...\n".format(legacy_containers_dir, new_containers_dir))
+    legacy_containers_dir.replace(new_containers_dir)
+
+    sys.stdout.write("Granting dcos_telegraf user permissions on {}...\n".format(new_containers_dir))
+    new_containers_dir.chmod(0o775)
+    for child in new_containers_dir.iterdir():
+        child.chmod(0o664)
+    sys.stdout.write("Done.\n")
+
+
+def dcos_telegraf_common():
+    telegraf_run = utils.dcos_run_path / 'telegraf'
+    telegraf_run.mkdir(mode=0o775, parents=True, exist_ok=True)
+    utils.chown(telegraf_run, user='root', group='dcos_telegraf')
+
+    # Migrate old containers dir to new location in case the cluster was upgraded.
+    legacy_containers_dir = Path(os.environ['LEGACY_CONTAINERS_DIR'])
+    telegraf_containers_dir = Path(os.environ['TELEGRAF_CONTAINERS_DIR'])
+    migrate_containers(legacy_containers_dir, telegraf_containers_dir)
+
+    telegraf_containers_dir.mkdir(mode=0o775, parents=True, exist_ok=True)
+    utils.chown(telegraf_containers_dir, user='root', group='dcos_telegraf')
+
+    user_config_dir = Path(os.environ['TELEGRAF_USER_CONFIG_DIR'])
+    user_config_dir.mkdir(parents=True, exist_ok=True)
+
+
 @check_root
 def dcos_telegraf_master(b, opts):
     b.cluster_id()
+    dcos_telegraf_common()
 
 
 @check_root
 def dcos_telegraf_agent(b, opts):
     b.cluster_id(readonly=True)
+    dcos_telegraf_common()
 
 
 @check_root
