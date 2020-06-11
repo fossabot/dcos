@@ -1,4 +1,6 @@
 # DC/OS - The Datacenter Operating System
+[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fmesosphere%2Fdcos.svg?type=shield)](https://app.fossa.com/projects/git%2Bgithub.com%2Fmesosphere%2Fdcos?ref=badge_shield)
+
 
 The easiest way to run microservices, big data, and containers in production.
 
@@ -292,3 +294,7 @@ A non-required status check is completely informational, and the success or the 
 
 The required status checks are encoded in the repo's megebot-config (For .e.g: https://github.com/dcos/dcos/blob/master/mergebot-config.json#L38)
 and are enforced by mergebot.
+
+
+## License
+[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fmesosphere%2Fdcos.svg?type=large)](https://app.fossa.com/projects/git%2Bgithub.com%2Fmesosphere%2Fdcos?ref=badge_large)
